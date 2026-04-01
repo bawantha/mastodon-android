@@ -1,0 +1,3 @@
+## 2024-04-01 - Avoid Theme Resolution in ItemDecoration onDraw
+**Learning:** In Android `RecyclerView.ItemDecoration`, the `onDraw` method is called repeatedly on every frame during scrolling. Calling methods like `UiUtils.getThemeColor()` inside this hot path causes unnecessary allocations (e.g., `obtainStyledAttributes`) and memory churn.
+**Action:** Lazily initialize `Paint` configurations (colors, stroke widths) using a boolean flag (`paintInitialized`) inside `onDraw` so they are computed only once. Do not do this in the constructor if it relies on `getActivity()` which might be null at instantiation.

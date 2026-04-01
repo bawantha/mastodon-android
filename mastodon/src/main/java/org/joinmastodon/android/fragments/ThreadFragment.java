@@ -489,15 +489,19 @@ public class ThreadFragment extends StatusListFragment implements AssistContentP
 	private class ReplyLinesItemDecoration extends RecyclerView.ItemDecoration{
 		private Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
 		private Rect tmpRect=new Rect();
+		private boolean paintInitialized=false;
 
 		@Override
 		public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
+			if(!paintInitialized){
+				paint.setColor(UiUtils.getThemeColor(getActivity(), R.attr.colorM3OutlineVariant));
+				paint.setStyle(Paint.Style.STROKE);
+				paint.setStrokeWidth(V.dp(2));
+				paint.setStrokeCap(Paint.Cap.ROUND);
+				paintInitialized=true;
+			}
 			String currentID=null;
 			boolean connectUp=false, connectToRoot=false, connectReply=false;
-			paint.setColor(UiUtils.getThemeColor(getActivity(), R.attr.colorM3OutlineVariant));
-			paint.setStyle(Paint.Style.STROKE);
-			paint.setStrokeWidth(V.dp(2));
-			paint.setStrokeCap(Paint.Cap.ROUND);
 			for(int i=0;i<parent.getChildCount();i++){
 				View child=parent.getChildAt(i);
 				if(!(parent.getChildViewHolder(child) instanceof StatusDisplayItem.Holder<?> holder) || holder.getItemID().equals(mainStatus.id))
@@ -545,10 +549,14 @@ public class ThreadFragment extends StatusListFragment implements AssistContentP
 
 	private class NewRepliesHighlightDecoration extends RecyclerView.ItemDecoration{
 		private final Paint paint=new Paint();
+		private boolean paintInitialized=false;
 
 		@Override
 		public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
-			paint.setColor(UiUtils.getThemeColor(getActivity(), R.attr.colorM3Primary));
+			if(!paintInitialized){
+				paint.setColor(UiUtils.getThemeColor(getActivity(), R.attr.colorM3Primary));
+				paintInitialized=true;
+			}
 			for(int i=0;i<parent.getChildCount();i++){
 				View child=parent.getChildAt(i);
 				if(!(parent.getChildViewHolder(child) instanceof StatusDisplayItem.Holder<?> holder))
