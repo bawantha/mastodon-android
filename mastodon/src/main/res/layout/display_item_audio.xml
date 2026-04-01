@@ -39,7 +39,8 @@
 			android:layout_height="96dp"
 			android:background="@drawable/bg_audio_play_button"
 			android:layout_gravity="center"
-			android:src="@drawable/ic_play_arrow_48px"/>
+			android:src="@drawable/ic_play_arrow_48px"
+			android:contentDescription="@string/play"/>
 		
 		<ImageButton
 			android:id="@+id/forward_btn"
