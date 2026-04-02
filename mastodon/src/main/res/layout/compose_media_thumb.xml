@@ -62,7 +62,8 @@
 		android:src="@drawable/ic_delete_24px"
 		android:tint="?colorM3OnSurfaceVariant"
 		android:backgroundTint="?colorM3OnSurfaceVariant"
-		android:background="@drawable/bg_round_ripple"/>
+		android:background="@drawable/bg_round_ripple"
+		android:contentDescription="@string/delete"/>
 
 	<ImageButton
 		android:id="@+id/edit"
@@ -75,7 +76,8 @@
 		android:src="@drawable/ic_edit_24px"
 		android:tint="?colorM3OnSurfaceVariant"
 		android:backgroundTint="?colorM3OnSurfaceVariant"
-		android:background="@drawable/bg_round_ripple"/>
+		android:background="@drawable/bg_round_ripple"
+		android:contentDescription="@string/edit"/>
 
 	<ProgressBar
 		android:id="@+id/progress"
