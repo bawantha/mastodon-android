@@ -89,13 +89,33 @@ public class HtmlParser{
 			}
 		}
 
-		Map<String, String> idsByUrl=mentions.stream().distinct().collect(Collectors.toMap(m->m.url, m->m.id, (a, b)->b));
-		// Hashtags in remote posts have remote URLs, these have local URLs so they don't match.
-//		Map<String, String> tagsByUrl=tags.stream().collect(Collectors.toMap(t->t.url, t->t.name));
-		Map<String, Hashtag> tagsByTag=tags.stream().distinct().collect(Collectors.toMap(t->t.name.toLowerCase(), Function.identity(), (a, b)->a));
-		Map<String, Mention> mentionsByID=mentions.stream().distinct().collect(Collectors.toMap(m->m.id, Function.identity(), (a, b)->a));
+		Map<String, String> idsByUrl;
+		Map<String, Mention> mentionsByID;
+		if (mentions.isEmpty()) {
+			idsByUrl = java.util.Collections.emptyMap();
+			mentionsByID = java.util.Collections.emptyMap();
+		} else {
+			idsByUrl = new java.util.HashMap<>();
+			mentionsByID = new java.util.HashMap<>();
+			for (Mention m : mentions) {
+				idsByUrl.put(m.url, m.id);
+				mentionsByID.putIfAbsent(m.id, m);
+			}
+		}
 
-		source=source.replaceAll("[\u2028\u2029]", "<br>");
+		Map<String, Hashtag> tagsByTag;
+		if (tags.isEmpty()) {
+			tagsByTag = java.util.Collections.emptyMap();
+		} else {
+			tagsByTag = new java.util.HashMap<>();
+			for (Hashtag t : tags) {
+				tagsByTag.putIfAbsent(t.name.toLowerCase(), t);
+			}
+		}
+
+		if(source.indexOf('\u2028') != -1 || source.indexOf('\u2029') != -1) {
+			source=source.replaceAll("[\u2028\u2029]", "<br>");
+		}
 		final SpannableStringBuilder ssb=new SpannableStringBuilder();
 		Element body=Jsoup.parseBodyFragment(source).body();
 		if(parentObject instanceof Status status && status.quote!=null)
@@ -264,26 +284,25 @@ public class HtmlParser{
 	}
 
 	public static void parseCustomEmoji(SpannableStringBuilder ssb, List<Emoji> emojis){
-		Map<String, Emoji> emojiByCode =
-			emojis.stream()
-			.collect(
-				Collectors.toMap(e->e.shortcode, Function.identity(), (emoji1, emoji2) -> {
-					// Ignore duplicate shortcodes and just take the first, it will be
-					// the same emoji anyway
-					return emoji1;
-				})
-			);
-
 		Matcher matcher=EMOJI_CODE_PATTERN.matcher(ssb);
+		if (!matcher.find()) {
+			return;
+		}
+
+		Map<String, Emoji> emojiByCode = new java.util.HashMap<>();
+		for (Emoji e : emojis) {
+			emojiByCode.putIfAbsent(e.shortcode, e);
+		}
+
 		int spanCount=0;
 		CustomEmojiSpan lastSpan=null;
-		while(matcher.find()){
+		do {
 			Emoji emoji=emojiByCode.get(matcher.group(1));
 			if(emoji==null)
 				continue;
 			ssb.setSpan(lastSpan=new CustomEmojiSpan(emoji), matcher.start(), matcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 			spanCount++;
-		}
+		} while(matcher.find());
 		if(spanCount==1 && ssb.getSpanStart(lastSpan)==0 && ssb.getSpanEnd(lastSpan)==ssb.length()){
 			ssb.append(' '); // To fix line height
 		}
