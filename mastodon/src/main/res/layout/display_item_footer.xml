@@ -109,7 +109,8 @@
 			android:layout_gravity="center"
 			android:src="@drawable/ic_share_20px"
 			android:tint="?colorM3Outline"
-			android:gravity="center_vertical"/>
+			android:gravity="center_vertical"
+			android:contentDescription="@string/button_share"/>
 	</FrameLayout>
 
 </LinearLayout>
