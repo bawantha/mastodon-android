@@ -144,23 +144,40 @@ public class CacheController{
 	}
 
 	private List<NotificationViewModel> makeNotificationViewModels(List<NotificationGroup> notifications, Map<String, Account> accounts, Map<String, Status> statuses){
-		return notifications.stream()
-				.filter(ng->ng.type!=null)
-				.map(ng->{
-					NotificationViewModel nvm=new NotificationViewModel();
-					nvm.notification=ng;
-					nvm.accounts=ng.sampleAccountIds.stream().map(accounts::get).filter(Objects::nonNull).collect(Collectors.toList());
-					if(nvm.accounts.size()!=ng.sampleAccountIds.size())
-						return null;
-					if(ng.statusId!=null){
-						nvm.status=statuses.get(ng.statusId);
-						if(nvm.status==null)
-							return null;
-					}
-					return nvm;
-				})
-				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+		/*
+		 * Performance optimization: Avoid Java Streams and lambda allocations on hot paths.
+		 * Using explicit loops reduces object creation and garbage collection overhead.
+		 */
+		List<NotificationViewModel> result = new ArrayList<>(notifications.size());
+		for (NotificationGroup ng : notifications) {
+			if (ng.type == null) {
+				continue;
+			}
+			NotificationViewModel nvm = new NotificationViewModel();
+			nvm.notification = ng;
+
+			List<Account> sampleAccounts = new ArrayList<>(ng.sampleAccountIds.size());
+			for (String accountId : ng.sampleAccountIds) {
+				Account account = accounts.get(accountId);
+				if (account != null) {
+					sampleAccounts.add(account);
+				}
+			}
+			nvm.accounts = sampleAccounts;
+
+			if (nvm.accounts.size() != ng.sampleAccountIds.size()) {
+				continue;
+			}
+
+			if (ng.statusId != null) {
+				nvm.status = statuses.get(ng.statusId);
+				if (nvm.status == null) {
+					continue;
+				}
+			}
+			result.add(nvm);
+		}
+		return result;
 	}
 
 	public void getNotifications(String maxID, int count, boolean onlyMentions, boolean forceReload, Callback<PaginatedResponse<List<NotificationViewModel>>> callback){
