@@ -461,7 +461,11 @@ public class HomeTimelineFragment extends StatusListFragment implements ToolbarD
 						}
 						if(!(toAdd instanceof ArrayList<?>))
 							toAdd=new ArrayList<>(toAdd);
-						Set<String> existingPostIDs=data.stream().map(s->s.id).collect(Collectors.toSet());
+						// ⚡ Bolt: Removed .stream() processing to avoid lambda/collector allocation overhead on Android hot paths
+						Set<String> existingPostIDs = new HashSet<>(data.size());
+						for (Status s : data) {
+							existingPostIDs.add(s.id);
+						}
 						toAdd.removeIf(s->existingPostIDs.contains(s.id));
 						if(needCache)
 							AccountSessionManager.get(accountID).filterStatuses(toAdd, FilterContext.HOME);
