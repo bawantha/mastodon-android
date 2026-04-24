@@ -195,6 +195,7 @@
 					android:layout_height="match_parent"
 					android:paddingHorizontal="8dp"
 					android:background="@drawable/bg_photo_viewer_action_centered"
+					android:contentDescription="@string/add_bookmark"
 					android:minWidth="34dp">
 					<ImageView
 						android:id="@+id/bookmark"
@@ -204,6 +205,7 @@
 						android:src="@drawable/ic_bookmark_20px_selector"
 						android:tint="#80ffffff"
 						android:tintMode="src_in"
+						android:importantForAccessibility="no"
 						android:duplicateParentState="true"
 						android:gravity="center_vertical"/>
 				</FrameLayout>
