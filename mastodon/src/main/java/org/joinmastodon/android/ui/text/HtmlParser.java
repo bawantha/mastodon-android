@@ -34,6 +34,8 @@ import org.jsoup.select.NodeVisitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,11 +91,30 @@ public class HtmlParser{
 			}
 		}
 
-		Map<String, String> idsByUrl=mentions.stream().distinct().collect(Collectors.toMap(m->m.url, m->m.id, (a, b)->b));
-		// Hashtags in remote posts have remote URLs, these have local URLs so they don't match.
-//		Map<String, String> tagsByUrl=tags.stream().collect(Collectors.toMap(t->t.url, t->t.name));
-		Map<String, Hashtag> tagsByTag=tags.stream().distinct().collect(Collectors.toMap(t->t.name.toLowerCase(), Function.identity(), (a, b)->a));
-		Map<String, Mention> mentionsByID=mentions.stream().distinct().collect(Collectors.toMap(m->m.id, Function.identity(), (a, b)->a));
+		// Optimize hot-path parsing: avoid Stream allocation for small collections
+		Map<String, String> idsByUrl;
+		Map<String, Mention> mentionsByID;
+		if (mentions == null || mentions.isEmpty()) {
+			idsByUrl = Collections.emptyMap();
+			mentionsByID = Collections.emptyMap();
+		} else {
+			idsByUrl = new HashMap<>();
+			mentionsByID = new HashMap<>();
+			for (Mention m : mentions) {
+				idsByUrl.put(m.url, m.id);
+				mentionsByID.putIfAbsent(m.id, m);
+			}
+		}
+
+		Map<String, Hashtag> tagsByTag;
+		if (tags == null || tags.isEmpty()) {
+			tagsByTag = Collections.emptyMap();
+		} else {
+			tagsByTag = new HashMap<>();
+			for (Hashtag t : tags) {
+				tagsByTag.putIfAbsent(t.name.toLowerCase(), t);
+			}
+		}
 
 		source=source.replaceAll("[\u2028\u2029]", "<br>");
 		final SpannableStringBuilder ssb=new SpannableStringBuilder();
@@ -264,15 +285,16 @@ public class HtmlParser{
 	}
 
 	public static void parseCustomEmoji(SpannableStringBuilder ssb, List<Emoji> emojis){
-		Map<String, Emoji> emojiByCode =
-			emojis.stream()
-			.collect(
-				Collectors.toMap(e->e.shortcode, Function.identity(), (emoji1, emoji2) -> {
-					// Ignore duplicate shortcodes and just take the first, it will be
-					// the same emoji anyway
-					return emoji1;
-				})
-			);
+		// Optimize hot-path parsing: avoid Stream allocation for small collections
+		Map<String, Emoji> emojiByCode;
+		if (emojis == null || emojis.isEmpty()) {
+			emojiByCode = Collections.emptyMap();
+		} else {
+			emojiByCode = new HashMap<>();
+			for (Emoji e : emojis) {
+				emojiByCode.putIfAbsent(e.shortcode, e);
+			}
+		}
 
 		Matcher matcher=EMOJI_CODE_PATTERN.matcher(ssb);
 		int spanCount=0;
