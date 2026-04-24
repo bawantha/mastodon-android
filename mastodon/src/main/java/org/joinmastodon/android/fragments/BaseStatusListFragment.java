@@ -133,7 +133,15 @@ public abstract class BaseStatusListFragment<T extends DisplayItemsParent> exten
 			populateNestedQuotes(newItems);
 			displayItems.addAll(newItems);
 		}
-		loadRelationships(items.stream().map(DisplayItemsParent::getAccountID).filter(Objects::nonNull).collect(Collectors.toSet()));
+		// ⚡ Bolt: Removed .stream() processing to avoid lambda/collector allocation overhead on Android hot paths
+		Set<String> accountIds = new HashSet<>();
+		for (T item : items) {
+			String accountId = item.getAccountID();
+			if (accountId != null) {
+				accountIds.add(accountId);
+			}
+		}
+		loadRelationships(accountIds);
 	}
 
 	@Override
@@ -162,7 +170,15 @@ public abstract class BaseStatusListFragment<T extends DisplayItemsParent> exten
 		}
 		if(notify)
 			adapter.notifyItemRangeInserted(0, offset);
-		loadRelationships(items.stream().map(DisplayItemsParent::getAccountID).filter(Objects::nonNull).collect(Collectors.toSet()));
+		// ⚡ Bolt: Removed .stream() processing to avoid lambda/collector allocation overhead on Android hot paths
+		Set<String> accountIds = new HashSet<>();
+		for (T item : items) {
+			String accountId = item.getAccountID();
+			if (accountId != null) {
+				accountIds.add(accountId);
+			}
+		}
+		loadRelationships(accountIds);
 	}
 
 	protected void postprocessNewlyLoadedStatuses(List<T> items){
@@ -686,7 +702,14 @@ public abstract class BaseStatusListFragment<T extends DisplayItemsParent> exten
 	protected void loadRelationships(Set<String> ids){
 		if(ids.isEmpty())
 			return;
-		ids=ids.stream().filter(id->!relationships.containsKey(id)).collect(Collectors.toSet());
+		// ⚡ Bolt: Removed .stream() processing to avoid lambda/collector allocation overhead on Android hot paths
+		Set<String> filteredIds = new HashSet<>();
+		for (String id : ids) {
+			if (!relationships.containsKey(id)) {
+				filteredIds.add(id);
+			}
+		}
+		ids = filteredIds;
 		if(ids.isEmpty())
 			return;
 		// TODO somehow manage these and cancel outstanding requests on refresh
